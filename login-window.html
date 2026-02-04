@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼多多登录 - 自动获取参数</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== 全局样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            color: #333;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 标题栏 - 与主窗口一致的渐变背景 */
+        .title-bar {
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .title-text {
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .window-controls button {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .window-controls button:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* URL输入区域 */
+        .url-section {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e8ecf3;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .url-section label {
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .url-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f2f5;
+            color: #333;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .btn:hover {
+            background: #e4e6eb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a408c 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11cdef 0%, #1171ef 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #0ea7d1 0%, #0d66d0 100%);
+            box-shadow: 0 4px 12px rgba(17, 205, 239, 0.3);
+        }
+
+        /* 主内容区域 - 左右分栏 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 左侧参数面板 */
+        .params-panel {
+            width: 360px;
+            background: white;
+            border-right: 1px solid #e8ecf3;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .params-header {
+            padding: 20px;
+            border-bottom: 1px solid #e8ecf3;
+        }
+
+        .params-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .params-subtitle {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .params-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .param-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e6ed;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .param-item.grabbed {
+            background: #f0f5ff;
+            border-color: #adc6ff;
+            color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+        }
+
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .param-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .param-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.pending {
+            background: #ffb800;
+        }
+
+        .status-dot.grabbed {
+            background: #10b981;
+        }
+
+        .status-text {
+            color: #999;
+        }
+
+        .param-item.grabbed .status-text {
+            color: #10b981;
+        }
+
+        .param-value {
+            font-size: 13px;
+            color: #333;
+            word-break: break-all;
+            max-height: 90px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 8px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 4px;
+        }
+
+        .param-item.grabbed .param-value {
+            color: #1890ff;
+        }
+
+        /* 右侧Webview区域 */
+        .webview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f5f7fa;
+            min-height: 0;
+        }
+
+        .webview-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            min-height: 0;
+        }
+
+        /* 移动设备样式的webview容器 */
+        .mobile-webview-wrapper {
+            width: 100%;
+            flex: 1;
+            background: white;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+        }
+
+        #pddWebview {
+            width: 100%;
+            height: 100%;
+            flex: 1;
+            border: none;
+            outline: none;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .webview-hidden {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .webview-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 10;
+            border-radius: 8px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e6ed;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loadingText {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .webview-controls {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e8ecf3;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* 底部操作栏 */
+        .bottom-bar {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e8ecf3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .bottom-bar-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bottom-bar-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .params-panel {
+                width: 100%;
+                height: 250px;
+                border-right: none;
+                border-bottom: 1px solid #e8ecf3;
+            }
+
+            .mobile-webview-wrapper {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 标题栏 -->
+    <div class="title-bar">
+        <div class="title-text">
+            <i class="fas fa-sign-in-alt"></i>
+            <span id="windowTitle">拼多多登录 - 自动获取参数</span>
+        </div>
+        <div class="window-controls">
+            <button id="minimizeBtn" title="最小化">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button id="maximizeBtn" title="最大化">
+                <i class="fas fa-square"></i>
+            </button>
+            <button id="closeBtn" title="关闭">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- URL输入区域 -->
+    <div class="url-section">
+        <label for="urlInput">目标网址：</label>
+        <input type="text" class="url-input" id="urlInput" value="https://mobile.yangkeduo.com" placeholder="输入拼多多登录页面URL">
+        <button class="btn btn-primary" id="openBtn">
+            <i class="fas fa-play"></i> 打开
+        </button>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 左侧参数面板 -->
+        <div class="params-panel">
+            <div class="params-header">
+                <div class="params-title">
+                    <i class="fas fa-list-check"></i> 抓取的参数
+                </div>
+                <div class="params-subtitle">
+                    已抓取 <span id="grabbedCount">0</span>/7
+                </div>
+            </div>
+            <div class="params-list">
+                <div class="param-item" id="paramCookie">
+                    <div class="param-header">
+                        <div class="param-name">完整Cookie</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramPdduid">
+                    <div class="param-header">
+                        <div class="param-name">PDDUID</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramUserAgent">
+                    <div class="param-header">
+                        <div class="param-name">User-Agent</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramAntiContent">
+                    <div class="param-header">
+                        <div class="param-name">Anti-Content</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramAddressId">
+                    <div class="param-header">
+                        <div class="param-name">Address ID</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramGroupId">
+                    <div class="param-header">
+                        <div class="param-name">Group ID</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+                <div class="param-item" id="paramActivityId">
+                    <div class="param-header">
+                        <div class="param-name">Activity ID</div>
+                        <div class="param-status">
+                            <div class="status-dot pending"></div>
+                            <span class="status-text">等待抓取</span>
+                        </div>
+                    </div>
+                    <div class="param-value">未抓取</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧Webview区域 -->
+        <div class="webview-panel">
+            <div class="webview-container">
+                <div class="mobile-webview-wrapper">
+                    <webview id="pddWebview" 
+                             useragent="Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36" 
+                             allowpopups
+                             disablewebsecurity
+                             autosize="on"
+                             minwidth="100"
+                             minheight="100"></webview>
+                    <div class="webview-loading" id="loadingOverlay">
+                        <div class="loading-spinner"></div>
+                        <div id="loadingText">请输入网址并点击"打开"按钮开始</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="bottom-bar">
+        <div class="bottom-bar-left">
+            <button class="btn btn-secondary" id="devToolsBtn">
+                <i class="fas fa-bug"></i> 开发者工具
+            </button>
+            <button class="btn btn-warning" id="clearCacheBtn">
+                <i class="fas fa-trash-alt"></i> 清除缓存
+            </button>
+        </div>
+        <div class="bottom-bar-right">
+            <button class="btn" id="refreshBtn" disabled>
+                <i class="fas fa-sync-alt"></i> 刷新
+            </button>
+            <button class="btn btn-primary" id="extractBtn" disabled>
+                <i class="fas fa-cookie-bite"></i> 手动提取
+            </button>
+            <button class="btn btn-success" id="applyBtn" disabled>
+                <i class="fas fa-check"></i> 应用到账号
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ========== 全局变量 ==========
+        var accountId = null;
+        var accountName = '未知账号';
+        var extractedData = {
+            cookie: '',
+            pdduid: '',
+            userAgent: '',
+            antiContent: '',
+            addressId: '',
+            groupId: '',
+            activityId: ''
+        };
+        var grabbedParams = new Set();
+        var isWebviewVisible = false;
+        var autoExtractInterval = null;
+        var webview = null;
+        var webviewListenersAdded = false;
+
+        // ========== 工具函数 ==========
+        function sendErrorToMain(type, error) {
+            try {
+                if (window.loginAPI && typeof window.loginAPI.sendErrorLog === 'function') {
+                    window.loginAPI.sendErrorLog(type, error).catch(function(e) {
+                        console.error('发送错误日志失败:', e);
+                    });
+                } else {
+                    console.error('[Local-Error]', type, error);
+                }
+            } catch (e) {
+                console.error('发送错误日志异常:', e);
+            }
+        }
+
+        function showNotification(message, type) {
+            var notification = document.createElement('div');
+            var bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#667eea';
+            notification.style.cssText = 'position: fixed; top: 70px; right: 20px; background: ' + bgColor + '; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000; max-width: 350px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); transition: all 0.3s;';
+            var icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            notification.innerHTML = '<i class="fas fa-' + icon + '"></i><span style="margin-left: 10px;">' + message + '</span>';
+            document.body.appendChild(notification);
+            
+            setTimeout(function() {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100px)';
+                setTimeout(function() { notification.remove(); }, 300);
+            }, 3000);
+        }
+
+        function updateParamStatus(paramId, value, grabbed) {
+            var paramItem = document.getElementById(paramId);
+            var paramValue = paramItem.querySelector('.param-value');
+            var statusDot = paramItem.querySelector('.status-dot');
+            var statusText = paramItem.querySelector('.status-text');
+            
+            if (grabbed) {
+                paramItem.classList.add('grabbed');
+                statusDot.className = 'status-dot grabbed';
+                statusText.textContent = '已抓取';
+                statusText.style.color = '#10b981';
+                grabbedParams.add(paramId);
+            } else {
+                paramItem.classList.remove('grabbed');
+                statusDot.className = 'status-dot pending';
+                statusText.textContent = '等待抓取';
+                statusText.style.color = '#999';
+                grabbedParams.delete(paramId);
+            }
+            
+            paramValue.textContent = value || '未抓取';
+            document.getElementById('grabbedCount').textContent = grabbedParams.size;
+            
+            if (grabbedParams.size === 7) {
+                showNotification('所有参数已成功抓取！', 'success');
+            }
+        }
+
+        function setLoading(loading, text) {
+            var overlay = document.getElementById('loadingOverlay');
+            var loadingText = document.getElementById('loadingText');
+            if (loading) {
+                overlay.style.display = 'flex';
+                if (text) loadingText.textContent = text;
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        // ========== Webview 控制 ==========
+        function adjustWebviewSize() {
+            var container = webview.parentElement;
+            if (container) {
+                container.style.display = 'none';
+                container.offsetHeight;
+                container.style.display = '';
+                webview.style.width = '100%';
+                webview.style.height = '100%';
+            }
+        }
+
+        // ========== 注入API请求拦截器 ==========
+        function injectApiInterceptor() {
+            if (!webview) return;
+            
+            console.log('[LoginWindow] 开始注入API拦截器...');
+            
+            // 注入代码到webview，拦截fetch和XMLHttpRequest - 使用纯ES5语法
+            var interceptorCode = "(function() {" +
+                "if (window.__PDD_API_INTERCEPTOR_INSTALLED__) return 'already installed';" +
+                "window.__PDD_API_INTERCEPTOR_INSTALLED__ = true;" +
+                "window.__PDD_REQUEST_PAYLOAD__ = null;" +
+                "" +
+                "var originalFetch = window.fetch;" +
+                "window.fetch = function(url, options) {" +
+                    "var opts = options || {};" +
+                    "var urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');" +
+                    "if (urlStr.indexOf('yangkeduo.com') > -1) {" +
+                        "if (opts.body && typeof opts.body === 'string') {" +
+                            "try {" +
+                                "var data = JSON.parse(opts.body);" +
+                                "window.__PDD_REQUEST_PAYLOAD__ = data;" +
+                                "console.log('[PDD] Fetch捕获:', Object.keys(data).join(','));" +
+                            "} catch (e) {}" +
+                        "}" +
+                    "}" +
+                    "return originalFetch.apply(this, arguments);" +
+                "};" +
+                "" +
+                "var originalXHROpen = XMLHttpRequest.prototype.open;" +
+                "var originalXHRSend = XMLHttpRequest.prototype.send;" +
+                "XMLHttpRequest.prototype.open = function(method, url) {" +
+                    "this._url = typeof url === 'string' ? url : '';" +
+                    "return originalXHROpen.apply(this, arguments);" +
+                "};" +
+                "XMLHttpRequest.prototype.send = function(body) {" +
+                    "if (this._url && this._url.indexOf('yangkeduo.com') > -1) {" +
+                        "if (body && typeof body === 'string') {" +
+                            "try {" +
+                                "var data = JSON.parse(body);" +
+                                "window.__PDD_REQUEST_PAYLOAD__ = data;" +
+                                "console.log('[PDD] XHR捕获:', Object.keys(data).join(','));" +
+                            "} catch (e) {}" +
+                        "}" +
+                    "}" +
+                    "return originalXHRSend.apply(this, arguments);" +
+                "};" +
+                "" +
+                "console.log('[PDD] 拦截器已安装');" +
+                "return 'installed';" +
+            "})()";
+            
+            webview.executeJavaScript(interceptorCode, false).then(function(result) {
+                console.log('[LoginWindow] API拦截器注入结果:', result);
+                if (result === 'installed') {
+                    showNotification('API拦截器已安装，可以开始抓取参数', 'success');
+                }
+            }).catch(function(err) {
+                console.error('[LoginWindow] API拦截器注入失败:', err);
+                showNotification('API拦截器安装失败，请刷新重试', 'error');
+            });
+        }
+
+        function setupWebviewEventListeners() {
+            if (!webview || webviewListenersAdded) return;
+            
+            webview.addEventListener('did-start-loading', function() {
+                setLoading(true, '正在加载页面...');
+            });
+
+            webview.addEventListener('dom-ready', function() {
+                adjustWebviewSize();
+            });
+
+            webview.addEventListener('did-stop-loading', function() {
+                setLoading(false);
+                // 注入API请求拦截代码
+                injectApiInterceptor();
+                // 页面加载完成后只自动提取一次参数
+                setTimeout(function() {
+                    extractParams();
+                }, 500);
+                showNotification('页面加载完成！请在操作后点击"手动提取"获取API参数', 'info');
+                adjustWebviewSize();
+            });
+
+            webview.addEventListener('did-fail-load', function(event) {
+                setLoading(false);
+                showNotification('页面加载失败: ' + (event.errorDescription || '未知错误'), 'error');
+            });
+            
+            webviewListenersAdded = true;
+        }
+
+        // ========== 参数提取 ==========
+        function extractParams() {
+            if (!webview || !webview.src) {
+                console.warn('[Extract] Webview尚未加载URL，无法提取参数');
+                return;
+            }
+
+            console.log('[Extract] 开始提取参数，当前URL:', webview.src);
+
+            // 简化的参数提取 - 使用ES5语法
+            var jsCode = "(function() {" +
+                "try {" +
+                    "var pageData = {};" +
+                    "var hasPayload = !!window.__PDD_REQUEST_PAYLOAD__;" +
+                    "var hasInitialState = !!window.__INITIAL_STATE__;" +
+                    "pageData._debug = {hasPayload: hasPayload, hasInitialState: hasInitialState};" +
+                    "" +
+                    "if (window.__PDD_REQUEST_PAYLOAD__) {" +
+                        "var payload = window.__PDD_REQUEST_PAYLOAD__;" +
+                        "pageData._debug.payloadKeys = Object.keys(payload).slice(0, 10);" +
+                        "if (payload.anti_content) pageData.antiContent = String(payload.anti_content);" +
+                        "else if (payload.antiContent) pageData.antiContent = String(payload.antiContent);" +
+                        "if (payload.address_id) pageData.addressId = String(payload.address_id);" +
+                        "else if (payload.addressId) pageData.addressId = String(payload.addressId);" +
+                        "if (payload.group_id) pageData.groupId = String(payload.group_id);" +
+                        "else if (payload.groupId) pageData.groupId = String(payload.groupId);" +
+                        "if (payload.goods_id) pageData.goodsId = String(payload.goods_id);" +
+                        "if (payload.sku_id) pageData.skuId = String(payload.sku_id);" +
+                        "if (payload.activity_id) pageData.activityId = String(payload.activity_id);" +
+                        "else if (payload.activityId) pageData.activityId = String(payload.activityId);" +
+                    "}" +
+                    "" +
+                    "if (!pageData.antiContent && window.__LAST_API_RESPONSE__) {" +
+                        "if (window.__LAST_API_RESPONSE__.anti_content) pageData.antiContent = String(window.__LAST_API_RESPONSE__.anti_content);" +
+                        "else if (window.__LAST_API_RESPONSE__.antiContent) pageData.antiContent = String(window.__LAST_API_RESPONSE__.antiContent);" +
+                    "}" +
+                    "" +
+                    "if (!pageData.antiContent) {" +
+                        "if (window.antiContent) pageData.antiContent = String(window.antiContent);" +
+                        "else if (window.anti_content) pageData.antiContent = String(window.anti_content);" +
+                    "}" +
+                    "" +
+                    "if (window.__INITIAL_STATE__) {" +
+                        "var initialState = window.__INITIAL_STATE__;" +
+                        "if (!pageData.antiContent) {" +
+                            "if (initialState.antiContent) pageData.antiContent = String(initialState.antiContent);" +
+                            "else if (initialState.anti_content) pageData.antiContent = String(initialState.anti_content);" +
+                        "}" +
+                        "if (!pageData.addressId && initialState.addressId) pageData.addressId = String(initialState.addressId);" +
+                        "else if (!pageData.addressId && initialState.address_id) pageData.addressId = String(initialState.address_id);" +
+                        "if (!pageData.groupId && initialState.groupId) pageData.groupId = String(initialState.groupId);" +
+                        "else if (!pageData.groupId && initialState.group_id) pageData.groupId = String(initialState.group_id);" +
+                    "}" +
+                    "" +
+                    "return JSON.stringify(pageData);" +
+                "} catch (e) {" +
+                    "return JSON.stringify({__error: true, message: e.message || String(e)});" +
+                "}" +
+            "})()";
+
+            // 首先获取完整的Cookie（包括HttpOnly Cookie）
+            var cookiePromise;
+            if (window.loginAPI && typeof window.loginAPI.getFullCookies === 'function') {
+                cookiePromise = window.loginAPI.getFullCookies().then(function(result) {
+                    if (result.success) {
+                        console.log('[Extract] 通过API获取到完整Cookie，共' + result.cookieCount + '个');
+                        return result.cookies;
+                    } else {
+                        console.warn('[Extract] 通过API获取Cookie失败:', result.message);
+                        return '';
+                    }
+                }).catch(function(err) {
+                    console.error('[Extract] 获取完整Cookie失败:', err);
+                    return '';
+                });
+            } else {
+                // 降级方案：使用document.cookie
+                console.warn('[Extract] loginAPI.getFullCookies不可用，降级使用document.cookie');
+                cookiePromise = webview.executeJavaScript('document.cookie').catch(function(err) {
+                    sendErrorToMain('document.cookie', err);
+                    return '';
+                });
+            }
+
+            Promise.all([
+                cookiePromise,
+                webview.executeJavaScript('navigator.userAgent').catch(function(err) { sendErrorToMain('navigator.userAgent', err); return ''; }),
+                webview.executeJavaScript('window.location.href').catch(function(err) { sendErrorToMain('window.location.href', err); return ''; }),
+                webview.executeJavaScript('JSON.stringify(window.__INITIAL_STATE__ || {})').catch(function(err) { sendErrorToMain('window.__INITIAL_STATE__', err); return '{}'; }),
+                webview.executeJavaScript('document.body.innerHTML').catch(function(err) { sendErrorToMain('document.body.innerHTML', err); return ''; }),
+                webview.executeJavaScript('JSON.stringify(window.localStorage)').catch(function(err) { sendErrorToMain('window.localStorage', err); return '{}'; }),
+                webview.executeJavaScript('JSON.stringify(window.sessionStorage)').catch(function(err) { sendErrorToMain('window.sessionStorage', err); return '{}'; }),
+                webview.executeJavaScript(jsCode).catch(function(err) { sendErrorToMain('deepSearch_execute', err); return '{}'; })
+            ]).then(function(results) {
+                var cookies = results[0];
+                var userAgent = results[1];
+                var url = results[2];
+                var initialState = results[3];
+                var bodyHtml = results[4];
+                var localStorageStr = results[5];
+                var sessionStorageStr = results[6];
+                var pageDataStr = results[7];
+
+                console.log('[Extract] 原始数据获取完成');
+
+                extractedData.cookie = cookies || '';
+                extractedData.userAgent = userAgent || '';
+
+                // 从完整的Cookie中提取pdduid
+                if (cookies) {
+                    var match = cookies.match(/pdduid=([^;]+)/i) ||
+                               cookies.match(/pdd_user_id=([^;]+)/i) ||
+                               cookies.match(/pdd_user_uin=([^;]+)/i);
+                    if (match) extractedData.pdduid = match[1];
+                }
+                
+                var pageData = {};
+                try {
+                    pageData = JSON.parse(pageDataStr || '{}');
+                    console.log('[Extract] 页面数据解析成功:', pageData._debug || '无调试信息');
+                    if (pageData._debug) delete pageData._debug;
+                } catch (e) {
+                    console.warn('[Extract] 解析页面数据失败:', e);
+                }
+                
+                // 记录提取结果
+                var beforeAntiContent = extractedData.antiContent;
+                var beforeAddressId = extractedData.addressId;
+                var beforeGroupId = extractedData.groupId;
+                var beforeActivityId = extractedData.activityId;
+                
+                if (pageData.antiContent && !extractedData.antiContent) {
+                    extractedData.antiContent = pageData.antiContent;
+                    console.log('[Extract] 获取到 antiContent:', extractedData.antiContent.substring(0, 30) + '...');
+                }
+                if (pageData.addressId && !extractedData.addressId) {
+                    extractedData.addressId = pageData.addressId;
+                    console.log('[Extract] 获取到 addressId:', extractedData.addressId);
+                }
+                if (pageData.groupId && !extractedData.groupId) {
+                    extractedData.groupId = pageData.groupId;
+                    console.log('[Extract] 获取到 groupId:', extractedData.groupId);
+                }
+                if (pageData.activityId && !extractedData.activityId) {
+                    extractedData.activityId = pageData.activityId;
+                    console.log('[Extract] 获取到 activityId:', extractedData.activityId);
+                }
+                
+                // 从bodyHtml中提取activity_id（如果之前未获取到）
+                if (!extractedData.activityId && bodyHtml) {
+                    // 尝试多种模式匹配activity_id
+                    var activityIdPatterns = [
+                        /activity[_-]?id["']?\s*[:=]\s*["']?(\d+)["']?/i,
+                        /["']activity[_-]?id["']\s*:\s*["'](\d+)["']/i,
+                        /activityId["']?\s*:\s*["']?(\d+)["']?/i,
+                        /"activity_id":\s*(\d+)/i,
+                        /activity_id=(\d+)/i,
+                        /activityId=(\d+)/i
+                    ];
+                    
+                    for (var i = 0; i < activityIdPatterns.length; i++) {
+                        var match = bodyHtml.match(activityIdPatterns[i]);
+                        if (match) {
+                            extractedData.activityId = match[1];
+                            console.log('[Extract] 从HTML中获取到 activityId:', extractedData.activityId);
+                            break;
+                        }
+                    }
+                }
+                
+                // 统计本次提取到的新参数
+                var newParamsCount = 0;
+                if (!beforeAntiContent && extractedData.antiContent) newParamsCount++;
+                if (!beforeAddressId && extractedData.addressId) newParamsCount++;
+                if (!beforeGroupId && extractedData.groupId) newParamsCount++;
+                if (!beforeActivityId && extractedData.activityId) newParamsCount++;
+                
+                if (newParamsCount > 0) {
+                    console.log('[Extract] 本次提取到 ' + newParamsCount + ' 个新API参数');
+                } else {
+                    console.log('[Extract] 本次未提取到新API参数（可能已存在或无API请求数据）');
+                }
+
+                updateParamStatus('paramCookie', extractedData.cookie.substring(0, 35) + '...', extractedData.cookie.length > 0);
+                updateParamStatus('paramPdduid', extractedData.pdduid, extractedData.pdduid.length > 0);
+                updateParamStatus('paramUserAgent', extractedData.userAgent.substring(0, 40) + '...', extractedData.userAgent.length > 0);
+                updateParamStatus('paramAntiContent', extractedData.antiContent, extractedData.antiContent.length > 0);
+                updateParamStatus('paramAddressId', extractedData.addressId, extractedData.addressId.length > 0);
+                updateParamStatus('paramGroupId', extractedData.groupId, extractedData.groupId.length > 0);
+                updateParamStatus('paramActivityId', extractedData.activityId, extractedData.activityId.length > 0);
+                
+                document.getElementById('extractBtn').disabled = false;
+                document.getElementById('applyBtn').disabled = !extractedData.cookie;
+                
+                console.log('[Extract] 参数提取完成，当前状态:', {
+                    cookie: extractedData.cookie.length > 0,
+                    pdduid: extractedData.pdduid.length > 0,
+                    userAgent: extractedData.userAgent.length > 0,
+                    antiContent: extractedData.antiContent.length > 0,
+                    addressId: extractedData.addressId.length > 0,
+                    groupId: extractedData.groupId.length > 0,
+                    activityId: extractedData.activityId.length > 0
+                });
+            }).catch(function(error) {
+                console.error('[Extract] 提取参数失败:', error);
+            });
+        }
+
+        // 手动触发参数提取（不再自动轮询）
+        function startAutoExtract() {
+            extractParams();
+        }
+
+        // 保留函数以兼容旧代码，但不再使用自动轮询
+        function stopAutoExtract() {
+            if (autoExtractInterval) {
+                clearInterval(autoExtractInterval);
+                autoExtractInterval = null;
+            }
+        }
+
+        // ========== 应用数据到账号配置 ==========
+        function applyCookieData() {
+            if (!extractedData.cookie) {
+                showNotification('请先抓取Cookie', 'warning');
+                return;
+            }
+
+            showNotification('正在应用参数到账号配置...', 'info');
+            
+            if (window.loginAPI && typeof window.loginAPI.applyCookieData === 'function') {
+                window.loginAPI.applyCookieData(extractedData).then(function(result) {
+                    if (result.success) {
+                        showNotification('参数已成功应用到账号配置！', 'success');
+                    } else {
+                        showNotification('应用失败: ' + (result.message || '未知错误'), 'error');
+                    }
+                }).catch(function(error) {
+                    showNotification('应用数据失败: ' + (error.message || '未知错误'), 'error');
+                });
+            } else {
+                showNotification('无法访问登录API，请检查preload脚本', 'error');
+            }
+        }
+
+        // ========== 事件监听器设置 ==========
+        function setupEventListeners() {
+            document.getElementById('minimizeBtn').addEventListener('click', function() {});
+            document.getElementById('maximizeBtn').addEventListener('click', function() {});
+            document.getElementById('closeBtn').addEventListener('click', function() {
+                stopAutoExtract();
+                window.close();
+            });
+
+            // 监听来自webview的消息
+            window.addEventListener('message', function(event) {
+                if (!event.data || typeof event.data !== 'object') return;
+                
+                if (event.data.type === 'pdd_params_extracted') {
+                    var params = event.data.params;
+                    console.log('[LoginWindow] 收到提取的参数:', params);
+                    
+                    var hasNewParams = false;
+                    
+                    if (params.antiContent && !extractedData.antiContent) {
+                        extractedData.antiContent = params.antiContent;
+                        updateParamStatus('paramAntiContent', extractedData.antiContent, true);
+                        hasNewParams = true;
+                    }
+                    if (params.addressId && !extractedData.addressId) {
+                        extractedData.addressId = params.addressId;
+                        updateParamStatus('paramAddressId', extractedData.addressId, true);
+                        hasNewParams = true;
+                    }
+                    if (params.groupId && !extractedData.groupId) {
+                        extractedData.groupId = params.groupId;
+                        updateParamStatus('paramGroupId', extractedData.groupId, true);
+                        hasNewParams = true;
+                    }
+                    if (params.activityId && !extractedData.activityId) {
+                        extractedData.activityId = params.activityId;
+                        updateParamStatus('paramActivityId', extractedData.activityId, true);
+                        hasNewParams = true;
+                    }
+                    
+                    document.getElementById('applyBtn').disabled = !extractedData.cookie;
+                    
+                    if (hasNewParams) {
+                        showNotification('成功捕获到请求参数！', 'success');
+                    }
+                }
+            });
+
+            document.getElementById('openBtn').addEventListener('click', function() {
+                if (!webview) {
+                    showNotification('Webview未初始化，请刷新页面重试', 'error');
+                    return;
+                }
+                var url = document.getElementById('urlInput').value.trim();
+                if (!url) {
+                    showNotification('请输入有效的URL', 'warning');
+                    return;
+                }
+
+                // 使用与主进程一致的 partition 名称
+                var partitionId = accountId || 'default';
+                webview.partition = 'persist:pdd_login_' + partitionId;
+                console.log('[LoginWindow] 设置webview partition:', webview.partition);
+                webview.classList.remove('webview-hidden');
+                webview.src = url;
+                isWebviewVisible = true;
+
+                setTimeout(function() {
+                    adjustWebviewSize();
+                }, 100);
+
+                document.getElementById('refreshBtn').disabled = false;
+            });
+
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                showNotification('正在刷新页面...', 'info');
+                webview.reload();
+                // 刷新后自动提取一次参数（页面加载完成后会再次触发did-stop-loading）
+            });
+
+            document.getElementById('extractBtn').addEventListener('click', function() {
+                showNotification('正在提取参数...', 'info');
+                extractParams();
+                // 延迟显示结果，让用户看到提取后的状态
+                setTimeout(function() {
+                    var gotAntiContent = extractedData.antiContent ? 1 : 0;
+                    var gotAddressId = extractedData.addressId ? 1 : 0;
+                    var gotGroupId = extractedData.groupId ? 1 : 0;
+                    var gotActivityId = extractedData.activityId ? 1 : 0;
+                    var totalApiParams = gotAntiContent + gotAddressId + gotGroupId + gotActivityId;
+                    
+                    if (totalApiParams > 0) {
+                        showNotification('成功提取 ' + totalApiParams + ' 个API参数！', 'success');
+                    } else {
+                        showNotification('未获取到API参数，请在页面操作后再试', 'warning');
+                    }
+                }, 500);
+            });
+
+            document.getElementById('applyBtn').addEventListener('click', function() {
+                applyCookieData();
+            });
+
+            // 开发者工具按钮
+            document.getElementById('devToolsBtn').addEventListener('click', function() {
+                if (webview) {
+                    webview.openDevTools();
+                    showNotification('开发者工具已打开', 'info');
+                } else {
+                    showNotification('Webview未初始化', 'error');
+                }
+            });
+
+            // 清除缓存按钮
+            document.getElementById('clearCacheBtn').addEventListener('click', function() {
+                if (!webview) {
+                    showNotification('Webview未初始化', 'error');
+                    return;
+                }
+                
+                showNotification('正在清除缓存...', 'info');
+                
+                // 清除localStorage、sessionStorage和cookie
+                var clearCode = "(function() {" +
+                    "try {" +
+                        "localStorage.clear();" +
+                        "sessionStorage.clear();" +
+                        "var cookies = document.cookie.split(';');" +
+                        "for (var i = 0; i < cookies.length; i++) {" +
+                            "var cookie = cookies[i];" +
+                            "var eqPos = cookie.indexOf('=');" +
+                            "var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;" +
+                            "document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';" +
+                        "}" +
+                        "return 'cleared';" +
+                    "} catch (e) {" +
+                        "return 'error: ' + e.message;" +
+                    "}" +
+                "})()";
+                
+                webview.executeJavaScript(clearCode, false).then(function(result) {
+                    console.log('[LoginWindow] 缓存清除结果:', result);
+                    showNotification('缓存已清除！请刷新页面', 'success');
+                    // 重置提取的数据
+                    extractedData = {
+                        cookie: '',
+                        pdduid: '',
+                        userAgent: '',
+                        antiContent: '',
+                        addressId: '',
+                        groupId: '',
+                        activityId: ''
+                    };
+                    grabbedParams.clear();
+                    // 重置UI显示
+                    updateParamStatus('paramCookie', '未抓取', false);
+                    updateParamStatus('paramPdduid', '未抓取', false);
+                    updateParamStatus('paramUserAgent', '未抓取', false);
+                    updateParamStatus('paramAntiContent', '未抓取', false);
+                    updateParamStatus('paramAddressId', '未抓取', false);
+                    updateParamStatus('paramGroupId', '未抓取', false);
+                    updateParamStatus('paramActivityId', '未抓取', false);
+                    document.getElementById('grabbedCount').textContent = '0';
+                }).catch(function(err) {
+                    console.error('[LoginWindow] 清除缓存失败:', err);
+                    showNotification('清除缓存失败', 'error');
+                });
+            });
+        }
+
+        // ========== 初始化 ==========
+        function init() {
+            var urlParams = new URLSearchParams(window.location.search);
+            accountId = urlParams.get('accountId');
+            
+            webview = document.getElementById('pddWebview');
+            if (webview) webview.classList.add('webview-hidden');
+            
+            if (accountId) {
+                if (window.loginAPI && typeof window.loginAPI.getAccountInfo === 'function') {
+                    window.loginAPI.getAccountInfo().then(function(result) {
+                        if (result.success && result.account) {
+                            accountName = result.account.name;
+                            document.getElementById('windowTitle').textContent = '拼多多登录 - ' + accountName;
+                        }
+                    }).catch(function(error) {
+                        console.error('获取账号信息失败:', error);
+                    });
+                } else {
+                    document.getElementById('windowTitle').textContent = '拼多多登录 - 账号 ' + accountId;
+                }
+            }
+            
+            // 使用与主进程一致的 partition 名称
+            var partitionId = accountId || 'default';
+            webview.partition = 'persist:pdd_login_' + partitionId;
+            console.log('[LoginWindow] 初始化设置webview partition:', webview.partition);
+            setupWebviewEventListeners();
+            setupEventListeners();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

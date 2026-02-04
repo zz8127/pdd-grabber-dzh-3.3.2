@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ========== 全局样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fa;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        /* ========== 窗口头部 ========== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .title i {
+            background: rgba(255,255,255,0.2);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+        
+        /* ========== 标签页导航 ========== */
+        .tabs {
+            display: flex;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 60px;
+            z-index: 90;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: linear-gradient(to bottom, rgba(102, 126, 234, 0.05), transparent);
+        }
+        
+        /* ========== 内容区域 ========== */
+        .content {
+            padding: 20px;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ========== 卡片样式 ========== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eef1f5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: #667eea;
+        }
+        
+        /* ========== 表单样式 ========== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+        
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-hint {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-col {
+            flex: 1;
+        }
+        
+        /* ========== 按钮样式 ========== */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4cd964 0%, #5ac8fa 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ff9500 0%, #ff5e3a 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff3b30 0%, #ff2d55 100%);
+            color: white;
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #5ac8fa 0%, #007aff 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-lg {
+            padding: 14px 24px;
+            font-size: 16px;
+        }
+        
+        /* ========== 任务列表样式 ========== */
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .task-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .task-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .task-time {
+            font-size: 12px;
+            color: #666;
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .task-info {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* ========== 日志样式 ========== */
+        .logs-container {
+            background: #1a1a1a;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            height: calc(100vh - 250px);
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid #333;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .log-time {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+        
+        .log-type {
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 11px;
+        }
+        
+        .log-type.info {
+            background: rgba(0, 122, 255, 0.2);
+            color: #5ac8fa;
+        }
+        
+        .log-type.success {
+            background: rgba(76, 217, 100, 0.2);
+            color: #4cd964;
+        }
+        
+        .log-type.warning {
+            background: rgba(255, 149, 0, 0.2);
+            color: #ff9500;
+        }
+        
+        .log-type.error {
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff3b30;
+        }
+        
+        /* ========== 统计卡片 ========== */
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stat-success { color: #4cd964; }
+        .stat-danger { color: #ff3b30; }
+        .stat-warning { color: #ff9500; }
+        .stat-info { color: #007aff; }
+        
+        /* ========== 加载动画 ========== */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ========== 响应式设计 ========== */
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .tab {
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .stats-row {
+                flex-direction: column;
+            }
+        }
+        
+        /* ========== 模态框样式 ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* ========== 工具类 ========== */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .d-flex { display: flex; }
+        .d-none { display: none; }
+        .align-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-10 { gap: 10px; }
+        .gap-15 { gap: 15px; }
+        .mt-10 { margin-top: 10px; }
+        .mt-20 { margin-top: 20px; }
+        .mb-10 { margin-bottom: 10px; }
+        .mb-20 { margin-bottom: 20px; }
+        .w-100 { width: 100%; }
+    </style>
+</head>
+<body>
+    <!-- 应用容器 -->
+    <div id="app">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="title">
+                <i class="fas fa-user-cog"></i>
+                <span id="windowTitle">账号管理</span>
+            </div>
+            <div class="controls">
+                <button class="control-btn" id="minimizeBtn">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="control-btn" id="maximizeBtn">
+                    <i class="fas fa-square"></i>
+                </button>
+                <button class="control-btn" id="closeBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 标签页 -->
+        <div class="tabs">
+            <div class="tab active" data-tab="config">
+                <i class="fas fa-cog"></i>
+                <span>账号配置</span>
+            </div>
+            <div class="tab" data-tab="tasks">
+                <i class="fas fa-tasks"></i>
+                <span>任务管理</span>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 账号配置标签页 -->
+            <div id="configTab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">账号信息</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">账号名称</label>
+                        <input type="text" class="form-control" id="accountName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">账号描述</label>
+                        <textarea class="form-control" id="accountDescription" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">账号状态</label>
+                        <div class="d-flex gap-10">
+                            <label>
+                                <input type="radio" name="accountStatus" value="enabled" checked> 启用
+                            </label>
+                            <label>
+                                <input type="radio" name="accountStatus" value="disabled"> 禁用
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Cookie配置</div>
+                        <div>
+                            <button class="btn btn-success btn-sm" id="loginBtn" style="margin-right: 8px;">
+                                <i class="fas fa-sign-in-alt"></i> 登入
+                            </button>
+                            <button class="btn btn-info btn-sm" id="testCookieBtn">
+                                <i class="fas fa-vial"></i> 测试
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">拼多多Cookie</label>
+                        <textarea class="form-control" id="cookieInput" rows="5" placeholder="粘贴完整的拼多多Cookie..." required></textarea>
+                        <div class="form-hint">
+                            提示：登录拼多多后按F12打开开发者工具，在Application中找到Cookie并复制
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">用户ID (pdduid)</label>
+                            <input type="text" class="form-control" id="pdduidInput" placeholder="自动从Cookie提取" readonly>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">User-Agent</label>
+                            <input type="text" class="form-control" id="userAgentInput">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">反爬参数 (anti_content)</label>
+                            <input type="text" class="form-control" id="antiContentInput">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">地址ID (address_id)</label>
+                            <input type="text" class="form-control" id="addressIdInput">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">团ID (group_id)</label>
+                            <input type="text" class="form-control" id="groupIdInput" value="153122715481">
+                            <div class="form-hint">默认: 153122715481</div>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">活动ID (activity_id)</label>
+                            <input type="text" class="form-control" id="activityIdInput" value="15082569568">
+                            <div class="form-hint">默认: 15082569568</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">请求设置</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">同时请求次数</label>
+                            <input type="number" class="form-control" id="requestCountInput" min="1" max="20" value="10">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">请求间隔 (毫秒)</label>
+                            <input type="number" class="form-control" id="requestIntervalInput" min="0" max="5000" value="500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">最大请求时间 (毫秒)</label>
+                            <input type="number" class="form-control" id="maxRequestTimeInput" min="0" max="30000" value="5000">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">请求超时 (毫秒)</label>
+                            <input type="number" class="form-control" id="timeoutInput" min="1000" max="60000" value="15000">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-between mt-20">
+                    <button class="btn btn-danger" id="resetConfigBtn">
+                        <i class="fas fa-undo"></i> 重置
+                    </button>
+                    <button class="btn btn-success" id="saveConfigBtn">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 任务管理标签页 -->
+            <div id="tasksTab" class="tab-content">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-value stat-success" id="taskSuccessCount">0</div>
+                        <div class="stat-label">成功次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-danger" id="taskFailCount">0</div>
+                        <div class="stat-label">失败次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-info" id="taskTotalCount">0</div>
+                        <div class="stat-label">总任务数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value stat-warning" id="activeTaskCount">0</div>
+                        <div class="stat-label">活动任务</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">添加新任务</div>
+                    </div>
+                    
+                    <form id="taskForm">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">任务名称</label>
+                                <input type="text" class="form-control" id="taskNameInput" placeholder="例如：抢购iPhone 15" required>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">购买数量</label>
+                                <input type="number" class="form-control" id="taskQuantityInput" min="1" max="10" value="1" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">商品ID</label>
+                                <input type="text" class="form-control" id="taskGoodsIdInput" required>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">SKU ID</label>
+                                <input type="text" class="form-control" id="taskSkuIdInput" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">抢购时间 (HH:mm:ss.SSS)</label>
+                            <input type="text" class="form-control" id="taskTimeInput" 
+                                   placeholder="格式: HH:mm:ss.SSS (如: 20:00:00.500)" 
+                                   value="20:00:00.000" required>
+                            <div class="form-hint">
+                                支持毫秒精度，如 20:00:00.500 表示20点0分0.5秒
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="taskEnabledCheckbox" checked> 启用任务
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex gap-10">
+                            <button type="reset" class="btn">清空</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> 添加任务
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">任务列表</div>
+                        <button class="btn btn-info btn-sm" id="refreshTasksBtn">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                    
+                    <div id="tasksList" style="min-height: 200px;">
+                        <div class="text-center" style="padding: 40px; color: #999;">
+                            <i class="fas fa-tasks fa-3x mb-15"></i>
+                            <p>暂无任务，请添加第一个任务</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">快速抢购</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">商品ID</label>
+                            <input type="text" class="form-control" id="quickGoodsIdInput">
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">SKU ID</label>
+                            <input type="text" class="form-control" id="quickSkuIdInput">
+                        </div>
+                        <div class="form-col" style="max-width: 100px;">
+                            <label class="form-label">数量</label>
+                            <input type="number" class="form-control" id="quickQuantityInput" min="1" max="10" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-10 mt-10">
+                        <button class="btn btn-success" id="quickBuyBtn">
+                            <i class="fas fa-bolt"></i> 立即抢购
+                        </button>
+                        <button class="btn btn-warning" id="testTaskBtn">
+                            <i class="fas fa-vial"></i> 测试任务
+                        </button>
+                    </div>
+                    
+                    <div id="quickBuyResult" class="mt-20" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fas fa-poll"></i>
+                                    抢购结果
+                                </div>
+                            </div>
+                            <div id="quickBuyResultContent" class="p-15 text-center">
+                                <!-- 结果内容 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 任务编辑模态框 -->
+    <div id="editTaskModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">编辑任务</div>
+                <button class="btn btn-sm" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editTaskForm">
+                    <input type="hidden" id="editTaskId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">任务名称</label>
+                        <input type="text" class="form-control" id="editTaskName" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">商品ID</label>
+                            <input type="text" class="form-control" id="editTaskGoodsId" required>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">SKU ID</label>
+                            <input type="text" class="form-control" id="editTaskSkuId" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">抢购时间</label>
+                            <input type="text" class="form-control" id="editTaskTime" required>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">购买数量</label>
+                            <input type="number" class="form-control" id="editTaskQuantity" min="1" max="10" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="editTaskEnabled" checked> 启用任务
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditModal()">取消</button>
+                <button class="btn btn-primary" id="saveEditTask">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 全局变量 ==========
+        let currentTab = 'config';
+        let currentAccount = null;
+        let accountTasks = [];
+        let editTaskId = null;
+        
+        // ========== 工具函数 ==========
+        function showNotification(message, type = 'info') {
+            // 简单的通知实现
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#19be6b' : 
+                            type === 'error' ? '#ed4014' : 
+                            type === 'warning' ? '#ff9900' : '#2db7f5'};
+                color: white;
+                padding: 12px 16px;
+                border-radius: 6px;
+                z-index: 10000;
+                max-width: 300px;
+            `;
+            
+            notification.innerHTML = `<div>${message}</div>`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        function formatTime(date) {
+            return date.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+        
+        // ========== 标签页切换 ==========
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // 更新标签页
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            
+            // 更新内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+            
+            // 移除日志加载相关代码
+            // loadTabData(tabName); // 改为直接调用具体函数
+            if (tabName === 'config') {
+                loadAccountConfig();
+            } else if (tabName === 'tasks') {
+                loadAccountTasks();
+                loadTaskStats();
+            }
+        }
+
+        
+        async function loadAccountConfig() {
+            try {
+                const response = await window.accountAPI.getAccount();
+                if (response.success) {
+                    currentAccount = response.account;
+                    updateWindowTitle();
+                    fillConfigForm(currentAccount);
+                }
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                showNotification('加载配置失败', 'error');
+            }
+        }
+        
+        async function loadAccountTasks() {
+            try {
+                const response = await window.accountAPI.getAccountTasks();
+                if (response.success) {
+                    accountTasks = response.tasks || [];
+                    renderTasksList();
+                }
+            } catch (error) {
+                console.error('加载任务失败:', error);
+                showNotification('加载任务失败', 'error');
+            }
+        }
+        
+        async function loadTaskStats() {
+            try {
+                const response = await window.accountAPI.getAccountStats();
+                if (response.success && response.stats) {
+                    updateTaskStats(response.stats);
+                }
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+        
+        // ========== 数据更新函数 ==========
+        function updateWindowTitle() {
+            if (currentAccount) {
+                document.getElementById('windowTitle').textContent = `账号管理 - ${currentAccount.name}`;
+                document.title = `账号管理 - ${currentAccount.name}`;
+            }
+        }
+        
+        function fillConfigForm(account) {
+            // 账号信息
+            document.getElementById('accountName').value = account.name || '';
+            document.getElementById('accountDescription').value = account.description || '';
+            
+            const enabledRadio = document.querySelector('input[name="accountStatus"][value="enabled"]');
+            const disabledRadio = document.querySelector('input[name="accountStatus"][value="disabled"]');
+            if (account.enabled === false) {
+                disabledRadio.checked = true;
+            } else {
+                enabledRadio.checked = true;
+            }
+            
+            // Cookie配置
+            document.getElementById('cookieInput').value = account.cookie || '';
+            document.getElementById('pdduidInput').value = account.pdduid || '';
+            document.getElementById('userAgentInput').value = account.userAgent || '';
+            document.getElementById('antiContentInput').value = account.antiContent || '';
+            document.getElementById('addressIdInput').value = account.defaultAddressId || '';
+            document.getElementById('groupIdInput').value = account.defaultGroupId || '153122715481';
+            document.getElementById('activityIdInput').value = account.defaultActivityId || '15082569568';
+            
+            // 请求设置
+            document.getElementById('requestCountInput').value = account.requestSettings?.requestCount || 10;
+            document.getElementById('requestIntervalInput').value = account.requestSettings?.requestInterval || 500;
+            document.getElementById('maxRequestTimeInput').value = account.requestSettings?.maxRequestTime || 5000;
+            document.getElementById('timeoutInput').value = account.requestSettings?.timeout || 15000;
+        }
+        
+        function renderTasksList() {
+            const container = document.getElementById('tasksList');
+            if (!container) return;
+            
+            if (!accountTasks || accountTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center" style="padding: 40px; color: #999;">
+                        <i class="fas fa-tasks fa-3x mb-15"></i>
+                        <p>暂无任务，请添加第一个任务</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            accountTasks.forEach(task => {
+                const enabled = task.enabled !== false;
+                
+                html += `
+                    <div class="task-item">
+                        <div class="task-header">
+                            <div class="task-name">${task.name}</div>
+                            <div class="task-time">${task.time || '未设置'}</div>
+                        </div>
+                        <div class="task-info">
+                            <div>商品ID: ${task.goodsId}</div>
+                            <div>SKU: ${task.skuId}</div>
+                            <div>数量: ${task.quantity || 1}</div>
+                            <div style="color: ${enabled ? '#4cd964' : '#ff3b30'}">
+                                ${enabled ? '已启用' : '已禁用'}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn btn-sm btn-success" onclick="runTask('${task.id}')">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="openEditTaskModal('${task.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTask('${task.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function updateTaskStats(stats) {
+            document.getElementById('taskSuccessCount').textContent = stats.successCount || 0;
+            document.getElementById('taskFailCount').textContent = stats.failCount || 0;
+            document.getElementById('taskTotalCount').textContent = stats.taskCount || 0;
+            document.getElementById('activeTaskCount').textContent = stats.enabledTaskCount || 0;
+        }
+        
+        // ========== 账号配置操作 ==========
+        async function saveAccountConfig() {
+            try {
+                const accountId = window.accountAPI.getAccountId();
+                if (!accountId) {
+                    showNotification('账号ID获取失败', 'error');
+                    return;
+                }
+                
+                const updates = {
+                    name: document.getElementById('accountName').value.trim(),
+                    description: document.getElementById('accountDescription').value.trim(),
+                    enabled: document.querySelector('input[name="accountStatus"]:checked').value === 'enabled',
+                    cookie: document.getElementById('cookieInput').value.trim(),
+                    pdduid: document.getElementById('pdduidInput').value.trim(),
+                    userAgent: document.getElementById('userAgentInput').value.trim(),
+                    antiContent: document.getElementById('antiContentInput').value.trim(),
+                    defaultAddressId: document.getElementById('addressIdInput').value.trim(),
+                    defaultGroupId: document.getElementById('groupIdInput').value.trim(),
+                    defaultActivityId: document.getElementById('activityIdInput').value.trim(),
+                    requestSettings: {
+                        requestCount: parseInt(document.getElementById('requestCountInput').value) || 10,
+                        requestInterval: parseInt(document.getElementById('requestIntervalInput').value) || 500,
+                        maxRequestTime: parseInt(document.getElementById('maxRequestTimeInput').value) || 5000,
+                        timeout: parseInt(document.getElementById('timeoutInput').value) || 15000
+                    }
+                };
+                
+                const response = await window.accountAPI.updateAccount(updates);
+                
+                if (response.success) {
+                    showNotification('配置保存成功', 'success');
+                    currentAccount = response.account;
+                    updateWindowTitle();
+                } else {
+                    showNotification(`保存失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                showNotification(`保存失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCookie() {
+            try {
+                const cookie = document.getElementById('cookieInput').value.trim();
+                if (!cookie) {
+                    showNotification('请输入Cookie', 'error');
+                    return;
+                }
+                
+                // 简单测试Cookie格式
+                const hasPdduid = cookie.includes('pdduid=') || cookie.includes('pdd_user_id=');
+                if (hasPdduid) {
+                    showNotification('Cookie格式正确，已提取用户ID', 'success');
+                    
+                    // 尝试提取pdduid
+                    const pdduidMatch = cookie.match(/pdduid=([^;]+)/) || 
+                                       cookie.match(/pdd_user_id=([^;]+)/);
+                    if (pdduidMatch && pdduidMatch[1]) {
+                        document.getElementById('pdduidInput').value = pdduidMatch[1];
+                    }
+                } else {
+                    showNotification('Cookie格式错误，未找到pdduid', 'warning');
+                }
+            } catch (error) {
+                console.error('测试Cookie失败:', error);
+                showNotification(`测试失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loginAccount() {
+            try {
+                // 打开登录窗口
+                const result = await window.accountAPI.openLoginWindow();
+                if (result.success) {
+                    showNotification('登录窗口已打开', 'success');
+                    // 监听Cookie数据应用事件
+                    window.accountAPI.onCookieDataApplied((cookieData) => {
+                        autoFillCookieConfig(cookieData);
+                    });
+                } else {
+                    showNotification(`打开登录窗口失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                showNotification(`登录失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function autoFillCookieConfig(cookieData) {
+            // 自动填充Cookie配置
+            if (cookieData.cookie) {
+                document.getElementById('cookieInput').value = cookieData.cookie;
+            }
+            if (cookieData.pdduid) {
+                document.getElementById('pdduidInput').value = cookieData.pdduid;
+            }
+            if (cookieData.userAgent) {
+                document.getElementById('userAgentInput').value = cookieData.userAgent;
+            }
+            if (cookieData.antiContent) {
+                document.getElementById('antiContentInput').value = cookieData.antiContent;
+            }
+            if (cookieData.addressId) {
+                document.getElementById('addressIdInput').value = cookieData.addressId;
+            }
+            if (cookieData.groupId) {
+                document.getElementById('groupIdInput').value = cookieData.groupId;
+            }
+            if (cookieData.activityId) {
+                document.getElementById('activityIdInput').value = cookieData.activityId;
+            }
+            
+            showNotification('Cookie配置已自动填充', 'success');
+        }
+        
+        // ========== 任务管理操作 ==========
+        async function addTask(taskData) {
+            try {
+                const response = await window.accountAPI.addTask(taskData);
+                if (response.success) {
+                    showNotification('任务添加成功', 'success');
+                    document.getElementById('taskForm').reset();
+                    await loadAccountTasks();
+                } else {
+                    showNotification(`添加失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('添加任务失败:', error);
+                showNotification(`添加失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runTask(taskId) {
+            try {
+                const task = accountTasks.find(t => t.id === taskId);
+                if (!task) {
+                    showNotification('任务不存在', 'error');
+                    return;
+                }
+                
+                const response = await window.accountAPI.executeTaskNow({
+                    name: task.name,
+                    goodsId: task.goodsId,
+                    skuId: task.skuId,
+                    quantity: task.quantity || 1
+                });
+                
+                if (response.success) {
+                    showNotification('任务执行成功', 'success');
+                } else {
+                    showNotification(`执行失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('执行任务失败:', error);
+                showNotification(`执行失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function openEditTaskModal(taskId) {
+            const task = accountTasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            editTaskId = taskId;
+            
+            document.getElementById('editTaskId').value = taskId;
+            document.getElementById('editTaskName').value = task.name;
+            document.getElementById('editTaskGoodsId').value = task.goodsId;
+            document.getElementById('editTaskSkuId').value = task.skuId;
+            document.getElementById('editTaskTime').value = task.time;
+            document.getElementById('editTaskQuantity').value = task.quantity || 1;
+            document.getElementById('editTaskEnabled').checked = task.enabled !== false;
+            
+            document.getElementById('editTaskModal').style.display = 'flex';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editTaskModal').style.display = 'none';
+            document.getElementById('editTaskForm').reset();
+            editTaskId = null;
+        }
+        
+        async function saveEditedTask() {
+            try {
+                const taskId = document.getElementById('editTaskId').value;
+                if (!taskId) return;
+                
+                const updates = {
+                    name: document.getElementById('editTaskName').value.trim(),
+                    goodsId: document.getElementById('editTaskGoodsId').value.trim(),
+                    skuId: document.getElementById('editTaskSkuId').value.trim(),
+                    time: document.getElementById('editTaskTime').value.trim(),
+                    quantity: parseInt(document.getElementById('editTaskQuantity').value) || 1,
+                    enabled: document.getElementById('editTaskEnabled').checked
+                };
+                
+                const response = await window.accountAPI.updateTask(taskId, updates);
+                if (response.success) {
+                    showNotification('任务修改成功', 'success');
+                    closeEditModal();
+                    await loadAccountTasks();
+                } else {
+                    showNotification(`修改失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('修改任务失败:', error);
+                showNotification(`修改失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function deleteTask(taskId) {
+            if (!confirm('确定要删除这个任务吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await window.accountAPI.deleteTask(taskId);
+                if (response.success) {
+                    showNotification('任务删除成功', 'success');
+                    await loadAccountTasks();
+                } else {
+                    showNotification(`删除失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('删除任务失败:', error);
+                showNotification(`删除失败: ${error.message}`, 'error');
+            }
+        }
+        
+        async function quickBuy() {
+            const goodsId = document.getElementById('quickGoodsIdInput').value.trim();
+            const skuId = document.getElementById('quickSkuIdInput').value.trim();
+            const quantity = parseInt(document.getElementById('quickQuantityInput').value) || 1;
+            
+            if (!goodsId || !skuId) {
+                showNotification('请输入商品ID和SKU ID', 'error');
+                return;
+            }
+            
+            try {
+                const response = await window.accountAPI.executeTaskNow({
+                    name: '快速抢购',
+                    goodsId,
+                    skuId,
+                    quantity
+                });
+                
+                const resultContainer = document.getElementById('quickBuyResult');
+                const resultContent = document.getElementById('quickBuyResultContent');
+                
+                if (response.success) {
+                    resultContent.innerHTML = `
+                        <div style="color: #4cd964;">
+                            <i class="fas fa-check-circle fa-3x"></i>
+                            <h3 style="margin: 10px 0;">抢购成功！</h3>
+                            <p>${response.message || '订单提交成功'}</p>
+                            <p>时间: ${new Date().toLocaleString('zh-CN')}</p>
+                        </div>
+                    `;
+                    resultContainer.style.display = 'block';
+                    showNotification('抢购成功！', 'success');
+                } else {
+                    resultContent.innerHTML = `
+                        <div style="color: #ff3b30;">
+                            <i class="fas fa-times-circle fa-3x"></i>
+                            <h3 style="margin: 10px 0;">抢购失败</h3>
+                            <p>错误: ${response.message || '未知错误'}</p>
+                        </div>
+                    `;
+                    resultContainer.style.display = 'block';
+                    showNotification(`抢购失败: ${response.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('快速抢购失败:', error);
+                showNotification(`抢购失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // ========== 窗口操作 ==========
+        function setupWindowControls() {
+            document.getElementById('minimizeBtn').addEventListener('click', () => {
+                window.accountAPI.minimizeWindow();
+            });
+            
+            document.getElementById('maximizeBtn').addEventListener('click', () => {
+                window.accountAPI.maximizeWindow();
+            });
+            
+            document.getElementById('closeBtn').addEventListener('click', () => {
+                window.accountAPI.closeWindow();
+            });
+        }
+        
+        // ========== 事件监听设置 ==========
+        function setupEventListeners() {
+            // 标签页切换
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+            
+            // 窗口控制
+            setupWindowControls();
+            
+            // 账号配置标签页
+            document.getElementById('saveConfigBtn').addEventListener('click', saveAccountConfig);
+            document.getElementById('loginBtn').addEventListener('click', loginAccount);
+            document.getElementById('testCookieBtn').addEventListener('click', testCookie);
+            document.getElementById('resetConfigBtn').addEventListener('click', () => {
+                if (confirm('确定要重置所有配置吗？')) {
+                    if (currentAccount) {
+                        fillConfigForm(currentAccount);
+                        showNotification('配置已重置', 'success');
+                    }
+                }
+            });
+            
+            // Cookie输入时自动提取pdduid
+            document.getElementById('cookieInput').addEventListener('input', (e) => {
+                const cookie = e.target.value;
+                const pdduidMatch = cookie.match(/pdduid=([^;]+)/) || 
+                                   cookie.match(/pdd_user_id=([^;]+)/);
+                if (pdduidMatch && pdduidMatch[1]) {
+                    document.getElementById('pdduidInput').value = pdduidMatch[1];
+                }
+            });
+            
+            // 任务管理标签页
+            document.getElementById('taskForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const taskData = {
+                    name: document.getElementById('taskNameInput').value.trim(),
+                    goodsId: document.getElementById('taskGoodsIdInput').value.trim(),
+                    skuId: document.getElementById('taskSkuIdInput').value.trim(),
+                    quantity: parseInt(document.getElementById('taskQuantityInput').value) || 1,
+                    time: document.getElementById('taskTimeInput').value.trim(),
+                    enabled: document.getElementById('taskEnabledCheckbox').checked
+                };
+                
+                if (!taskData.name || !taskData.goodsId || !taskData.skuId || !taskData.time) {
+                    showNotification('请填写所有必填字段', 'error');
+                    return;
+                }
+                
+                addTask(taskData);
+            });
+            
+            document.getElementById('refreshTasksBtn').addEventListener('click', () => {
+                loadAccountTasks();
+                showNotification('任务列表已刷新', 'success');
+            });
+            
+            document.getElementById('quickBuyBtn').addEventListener('click', quickBuy);
+            
+            document.getElementById('testTaskBtn').addEventListener('click', () => {
+                showNotification('测试任务功能', 'info');
+            });
+                        
+            // 任务编辑模态框
+            document.getElementById('saveEditTask').addEventListener('click', saveEditedTask);
+            
+            // 点击模态框外部关闭
+            document.getElementById('editTaskModal').addEventListener('click', (e) => {
+                if (e.target.id === 'editTaskModal') {
+                    closeEditModal();
+                }
+            });
+            
+            // 监听账号更新事件
+            window.accountAPI.onAccountUpdated((account) => {
+                if (account.id === window.accountAPI.getAccountId()) {
+                    currentAccount = account;
+                    updateWindowTitle();
+                    
+                    if (currentTab === 'config') {
+                        fillConfigForm(account);
+                    }
+                }
+            });
+            
+            // 监听任务更新事件
+            window.accountAPI.onTaskAdded((task) => {
+                if (task.accountId === window.accountAPI.getAccountId()) {
+                    loadAccountTasks();
+                }
+            });
+            
+            window.accountAPI.onTaskUpdated((task) => {
+                if (task.accountId === window.accountAPI.getAccountId()) {
+                    loadAccountTasks();
+                }
+            });
+            
+            window.accountAPI.onTaskDeleted((taskId) => {
+                loadAccountTasks();
+            });
+        }
+        
+        // ========== 初始化函数 ==========
+        function init() {
+            setupEventListeners();
+            loadAccountConfig();
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
