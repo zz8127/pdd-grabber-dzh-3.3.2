@@ -334,14 +334,6 @@ npm run build
 | 热门商品 | 15-20 | 200-300 | 3000 |
 | 测试 | 1-3 | 1000 | 3000 |
 
-#### 双API并发说明
-
-系统默认同时调用两个下单API：
-- `https://mobile.yangkeduo.com/proxy/api/api/vancouver/order_and_prepay`
-- `https://mobile.yangkeduo.com/proxy/api/order`
-
-两个API并发执行，任一成功即视为下单成功，提高抢购成功率。
-
 #### 时间同步建议
 
 - 抢购前5分钟进行手动同步
